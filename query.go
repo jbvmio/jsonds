@@ -12,11 +12,21 @@ type QueryRequest struct {
 	ScopedVars    ScopedVar     `json:"scopedVars"`
 }
 
+// GetGlobalVar returns ScopedPaired Variables by the given variable name.
+func (r *QueryRequest) GetGlobalVar(variable string) ScopedPair {
+	return r.ScopedVars[variable]
+}
+
 // Target specifies the intended target of a request.
 type Target struct {
 	Target string                 `json:"target"`
 	Type   string                 `json:"type"`
 	Data   map[string]interface{} `json:"data"`
+}
+
+// GetVar returns Variables by the given variable name.
+func (t *Target) GetVar(variable string) interface{} {
+	return t.Data[variable]
 }
 
 // AdhocFilter holds adhoc key values.

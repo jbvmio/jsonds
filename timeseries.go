@@ -23,6 +23,14 @@ type TimeSeriesData struct {
 	Datapoints []Datapoint `json:"datapoints"`
 }
 
+// AddDataPoint adds a Datapoint to a TimeSeriesData collection.
+func (t *TimeSeriesData) AddDataPoint(metricValue float64, timestampMS int64) {
+	t.Datapoints = append(t.Datapoints, Datapoint{
+		MetricValue:     metricValue,
+		UnixTimestampMS: timestampMS,
+	})
+}
+
 // TimeSeriesResponse contains all the information needed to render a TimeSeries event.
 type TimeSeriesResponse struct {
 	Data []TimeSeriesData

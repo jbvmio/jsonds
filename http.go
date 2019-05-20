@@ -115,9 +115,18 @@ func (g *GrafanaBackend) SetTagValues(path string, handler BEHandler) {
 func (g *GrafanaBackend) Configure() {
 	for _, ep := range Endpoints {
 		if *ep != RootEndpoint {
-			if _, ok := g.beHandlers[*ep]; !ok {
+			valid, ok := g.beHandlers[*ep]
+			switch {
+			case !ok:
 				g.beHandlers[*ep] = defaultBEHandler
+				fmt.Println("Configured:", *ep, "with default backend handler")
+			case valid == nil:
+				g.beHandlers[*ep] = defaultBEHandler
+				fmt.Println("Configured:", *ep, "with default backend handler")
+			default:
+				fmt.Println("Configured:", *ep)
 			}
+
 		}
 	}
 	g.APISrv.GET(string(RootEndpoint), g.statusOK)
