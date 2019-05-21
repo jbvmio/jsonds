@@ -8,6 +8,7 @@ import (
 	"github.com/jbvmio/modules/httpserver"
 	"github.com/julienschmidt/httprouter"
 	"github.com/tidwall/pretty"
+	"go.uber.org/zap"
 )
 
 // GrafanaBackend a httpserver and version info.
@@ -70,6 +71,12 @@ func New(config *Config) *GrafanaBackend {
 	}
 }
 
+// Logger returns a child logger from the main GrafanaBackend server.
+func (g *GrafanaBackend) Logger(name string) *zap.Logger {
+	logger := g.APISrv.Logger.Named(name)
+	return logger
+}
+
 // SetRoot configures the Root Endpoint Path.
 func (g *GrafanaBackend) SetRoot(path string) {
 	delete(g.beHandlers, RootEndpoint)
@@ -113,20 +120,20 @@ func (g *GrafanaBackend) SetTagValues(path string, handler BEHandler) {
 
 // Configure sets all configurations.
 func (g *GrafanaBackend) Configure() {
+	defaultHandler := make(map[string]bool)
 	for _, ep := range Endpoints {
 		if *ep != RootEndpoint {
 			valid, ok := g.beHandlers[*ep]
 			switch {
 			case !ok:
 				g.beHandlers[*ep] = defaultBEHandler
-				fmt.Println("Configured:", *ep, "with default backend handler")
+				defaultHandler[string(*ep)] = true
 			case valid == nil:
 				g.beHandlers[*ep] = defaultBEHandler
-				fmt.Println("Configured:", *ep, "with default backend handler")
+				defaultHandler[string(*ep)] = true
 			default:
-				fmt.Println("Configured:", *ep)
+				defaultHandler[string(*ep)] = false
 			}
-
 		}
 	}
 	g.APISrv.GET(string(RootEndpoint), g.statusOK)
@@ -136,6 +143,11 @@ func (g *GrafanaBackend) Configure() {
 	g.APISrv.POST(string(TagKeysEndpoint), g.handleTagKeys)
 	g.APISrv.POST(string(TagValuesEndpoint), g.handleTagValues)
 	g.APISrv.Configure()
+	for _, ep := range Endpoints {
+		if *ep != RootEndpoint {
+			g.APISrv.Logger.Info("Configured Endpoint", zap.String("Path", string(*ep)), zap.Bool("default backend handler", defaultHandler[string(*ep)]))
+		}
+	}
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

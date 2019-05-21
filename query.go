@@ -17,6 +17,24 @@ func (r *QueryRequest) GetGlobalVar(variable string) ScopedPair {
 	return r.ScopedVars[variable]
 }
 
+// ListGlobalVars returns a list of all ScopedPaired Variables by variable name.
+func (r *QueryRequest) ListGlobalVars() []string {
+	var variables []string
+	for v := range r.ScopedVars {
+		variables = append(variables, v)
+	}
+	return variables
+}
+
+// ListTargets returns a list of all Targets.
+func (r *QueryRequest) ListTargets() []string {
+	var targets []string
+	for _, t := range r.Targets {
+		targets = append(targets, t.Target)
+	}
+	return targets
+}
+
 // Target specifies the intended target of a request.
 type Target struct {
 	Target string                 `json:"target"`
@@ -27,6 +45,15 @@ type Target struct {
 // GetVar returns Variables by the given variable name.
 func (t *Target) GetVar(variable string) interface{} {
 	return t.Data[variable]
+}
+
+// ListVars returns a list of all Variables by variable name.
+func (t *Target) ListVars() []string {
+	var variables []string
+	for v := range t.Data {
+		variables = append(variables, v)
+	}
+	return variables
 }
 
 // AdhocFilter holds adhoc key values.
