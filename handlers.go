@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/logger"
 	"github.com/julienschmidt/httprouter"
 	"github.com/tidwall/pretty"
+	"go.uber.org/zap"
 )
 
 // BEHandler (BackEnd Handler) functions handle Query Requests and return a QueryResponse and error.
@@ -33,15 +35,18 @@ func defaultBEHandler(req Request) (Response, error) {
 }
 
 func (g *GrafanaBackend) statusOK(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	g.APISrv.Logger.Debug("root endpoint called", zap.String("method", r.Method), zap.String("from", r.RemoteAddr), zap.String("URI", r.RequestURI))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 func (g *GrafanaBackend) handleSearch(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	g.APISrv.Logger.Debug("search endpoint called", zap.String("endpoint", string(SearchEndpoint)), zap.String("method", r.Method), zap.String("from", r.RemoteAddr), zap.String("URI", r.RequestURI))
 	switch r.Method {
 	case http.MethodPost:
 		var req SearchRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Error("json decode failure", zap.Error(err))
 			errMsg := fmt.Sprintf("json decode failure: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errMsg))
@@ -49,6 +54,7 @@ func (g *GrafanaBackend) handleSearch(w http.ResponseWriter, r *http.Request, _ 
 		}
 		resp, err := g.beHandlers[SearchEndpoint](&req)
 		if err != nil {
+			logger.Error("backend handler failer", zap.String("endpoint", string(SearchEndpoint)), zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{\"error\":true,\"message\":\"` + err.Error() + `\"}`))
 		}
@@ -61,10 +67,12 @@ func (g *GrafanaBackend) handleSearch(w http.ResponseWriter, r *http.Request, _ 
 }
 
 func (g *GrafanaBackend) handleQuery(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	g.APISrv.Logger.Debug("query endpoint called", zap.String("endpoint", string(QueryEndpoint)), zap.String("method", r.Method), zap.String("from", r.RemoteAddr), zap.String("URI", r.RequestURI))
 	switch r.Method {
 	case http.MethodPost:
 		var req QueryRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Error("json decode failure", zap.Error(err))
 			errMsg := fmt.Sprintf("json decode failure: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errMsg))
@@ -72,6 +80,7 @@ func (g *GrafanaBackend) handleQuery(w http.ResponseWriter, r *http.Request, _ h
 		}
 		resp, err := g.beHandlers[QueryEndpoint](&req)
 		if err != nil {
+			logger.Error("backend handler failer", zap.String("endpoint", string(QueryEndpoint)), zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{\"error\":true,\"message\":\"` + err.Error() + `\"}`))
 		}
@@ -84,10 +93,12 @@ func (g *GrafanaBackend) handleQuery(w http.ResponseWriter, r *http.Request, _ h
 }
 
 func (g *GrafanaBackend) handleAnnotations(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	g.APISrv.Logger.Debug("annotation endpoint called", zap.String("endpoint", string(AnnotationsEndpoint)), zap.String("method", r.Method), zap.String("from", r.RemoteAddr), zap.String("URI", r.RequestURI))
 	switch r.Method {
 	case http.MethodPost:
 		var req AnnotationsReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Error("json decode failure", zap.Error(err))
 			errMsg := fmt.Sprintf("json decode failure: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errMsg))
@@ -95,6 +106,7 @@ func (g *GrafanaBackend) handleAnnotations(w http.ResponseWriter, r *http.Reques
 		}
 		resp, err := g.beHandlers[AnnotationsEndpoint](&req)
 		if err != nil {
+			logger.Error("backend handler failer", zap.String("endpoint", string(AnnotationsEndpoint)), zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{\"error\":true,\"message\":\"` + err.Error() + `\"}`))
 		}
@@ -107,10 +119,12 @@ func (g *GrafanaBackend) handleAnnotations(w http.ResponseWriter, r *http.Reques
 }
 
 func (g *GrafanaBackend) handleTagKeys(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	g.APISrv.Logger.Debug("tagkeys endpoint called", zap.String("endpoint", string(TagKeysEndpoint)), zap.String("method", r.Method), zap.String("from", r.RemoteAddr), zap.String("URI", r.RequestURI))
 	switch r.Method {
 	case http.MethodPost:
 		var req TagKeysReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Error("json decode failure", zap.Error(err))
 			errMsg := fmt.Sprintf("json decode failure: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errMsg))
@@ -118,6 +132,7 @@ func (g *GrafanaBackend) handleTagKeys(w http.ResponseWriter, r *http.Request, _
 		}
 		resp, err := g.beHandlers[TagKeysEndpoint](&req)
 		if err != nil {
+			logger.Error("backend handler failer", zap.String("endpoint", string(TagKeysEndpoint)), zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{\"error\":true,\"message\":\"` + err.Error() + `\"}`))
 		}
@@ -130,10 +145,12 @@ func (g *GrafanaBackend) handleTagKeys(w http.ResponseWriter, r *http.Request, _
 }
 
 func (g *GrafanaBackend) handleTagValues(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	g.APISrv.Logger.Debug("tagvalues endpoint called", zap.String("endpoint", string(TagValuesEndpoint)), zap.String("method", r.Method), zap.String("from", r.RemoteAddr), zap.String("URI", r.RequestURI))
 	switch r.Method {
 	case http.MethodPost:
 		var req TagValuesReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Error("json decode failure", zap.Error(err))
 			errMsg := fmt.Sprintf("json decode failure: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errMsg))
@@ -141,6 +158,7 @@ func (g *GrafanaBackend) handleTagValues(w http.ResponseWriter, r *http.Request,
 		}
 		resp, err := g.beHandlers[TagValuesEndpoint](&req)
 		if err != nil {
+			logger.Error("backend handler failer", zap.String("endpoint", string(TagValuesEndpoint)), zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{\"error\":true,\"message\":\"` + err.Error() + `\"}`))
 		}

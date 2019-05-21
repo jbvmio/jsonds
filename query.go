@@ -1,5 +1,11 @@
 package jsonds
 
+import (
+	"strings"
+
+	"github.com/spf13/cast"
+)
+
 // QueryRequest encodes the information provided by Grafana in its requests.
 type QueryRequest struct {
 	Range         Range         `json:"range"`
@@ -47,6 +53,24 @@ func (t *Target) GetVar(variable string) interface{} {
 	return t.Data[variable]
 }
 
+// GetVarStrings parses and returns Variables by the given variable name as a string array.
+func (t *Target) GetVarStrings(variable string) []string {
+	var strArray []string
+	switch i := t.Data[variable].(type) {
+	case []string:
+		strArray = i
+	case string:
+		strArray = strings.Split(strings.Trim(i, `{}`), `,`)
+	case []interface{}:
+		for _, x := range flattenArray(i) {
+			strArray = append(strArray, toStringArray(x)...)
+		}
+	default:
+		strArray = toStringArray(i)
+	}
+	return strArray
+}
+
 // ListVars returns a list of all Variables by variable name.
 func (t *Target) ListVars() []string {
 	var variables []string
@@ -67,6 +91,89 @@ type AdhocFilter struct {
 type ScopedPair struct {
 	Text  interface{} `json:"text"`
 	Value interface{} `json:"value"`
+}
+
+// TextStrings parses and if possible returns the Text of a ScopedPair as a string array.
+func (s ScopedPair) TextStrings() []string {
+	return toStringArray(s.Text)
+}
+
+// ValueStrings parses and if possible returns the values of a ScopedPair as a string array.
+func (s ScopedPair) ValueStrings() []string {
+	return toStringArray(s.Value)
+}
+
+func toStringArray(s interface{}) []string {
+	var strArray []string
+	switch i := s.(type) {
+	case []interface{}:
+		vals := flattenArray(i)
+		for _, v := range vals {
+			strArray = append(strArray, cast.ToString(v))
+		}
+	case []int:
+		for _, v := range i {
+			strArray = append(strArray, cast.ToString(v))
+		}
+	case []int64:
+		for _, v := range i {
+			strArray = append(strArray, cast.ToString(v))
+		}
+	case []float32:
+		for _, v := range i {
+			strArray = append(strArray, cast.ToString(v))
+		}
+	case []float64:
+		for _, v := range i {
+			strArray = append(strArray, cast.ToString(v))
+		}
+	case []string:
+		for _, v := range i {
+			strArray = append(strArray, v)
+		}
+	case string:
+		strArray = append(strArray, i)
+	}
+	return strArray
+}
+
+func flattenArray(i []interface{}) []interface{} {
+	var returnArray []interface{}
+	var workArray [][]interface{}
+	workArray[0] = i
+	for x := 0; x < len(workArray); x++ {
+		for y := 0; y < len(workArray[x]); y++ {
+			switch z := workArray[x][y].(type) {
+			case []interface{}:
+				workArray = append(workArray, z)
+			case interface{}:
+				returnArray = append(returnArray, z)
+			case int, int64, float32, float64, string:
+				returnArray = append(returnArray, z)
+			case []int:
+				for _, n := range z {
+					returnArray = append(returnArray, n)
+				}
+			case []int64:
+				for _, n := range z {
+					returnArray = append(returnArray, n)
+				}
+			case []float32:
+				for _, n := range z {
+					returnArray = append(returnArray, n)
+				}
+			case []float64:
+				for _, n := range z {
+					returnArray = append(returnArray, n)
+				}
+			case []string:
+				for _, n := range z {
+					returnArray = append(returnArray, n)
+				}
+			}
+		}
+	}
+	return returnArray
 }
 
 // ScopedVar contains ScopedVariable Pairs.

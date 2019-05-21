@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const applicationName = `grafana-backend`
+
 // GrafanaBackend a httpserver and version info.
 type GrafanaBackend struct {
 	APISrv     *httpserver.Module
@@ -143,6 +145,7 @@ func (g *GrafanaBackend) Configure() {
 	g.APISrv.POST(string(TagKeysEndpoint), g.handleTagKeys)
 	g.APISrv.POST(string(TagValuesEndpoint), g.handleTagValues)
 	g.APISrv.Configure()
+	g.APISrv.Logger = g.APISrv.Logger.Named(applicationName)
 	for _, ep := range Endpoints {
 		if *ep != RootEndpoint {
 			g.APISrv.Logger.Info("Configured Endpoint", zap.String("Path", string(*ep)), zap.Bool("default backend handler", defaultHandler[string(*ep)]))
