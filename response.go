@@ -1,6 +1,9 @@
 package jsonds
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // ResponseType identifies the type contained in the response.
 type ResponseType string
@@ -10,6 +13,7 @@ const (
 	RespAnnotation ResponseType = `annotation`
 	RespTimeSeries ResponseType = `timeseries`
 	RespTable      ResponseType = `table`
+	RespMulti      ResponseType = `multi`
 	RespTagKeys    ResponseType = `tagkeys`
 	RespTagValues  ResponseType = `tagvalues`
 	RespInvalid    ResponseType = `invalid`
@@ -34,6 +38,32 @@ func (t InvalidData) RespType() ResponseType {
 // MarshalJSON satisfies the QueryResponse interface and always an empty JSON response.
 func (t InvalidData) MarshalJSON() ([]byte, error) {
 	return []byte(`{}`), fmt.Errorf("could not handle request")
+}
+
+// MultiResponse contains both TimeSeries and Table data. (*WiP)
+type MultiResponse struct {
+	TimeSeriesResponse
+	TableResponse
+}
+
+// RespType satisfies the QueryResponse interface and returns the response type.
+func (r MultiResponse) RespType() ResponseType {
+	return RespMulti
+}
+
+// MarshalJSON provides JSON marshalling for a MultiResponse. (*WiP)
+func (r MultiResponse) MarshalJSON() ([]byte, error) {
+	var resp []byte
+	ts, err := json.Marshal(r.TimeSeriesResponse)
+	if err != nil {
+		return resp, err
+	}
+	resp, err = json.Marshal(r.TableResponse)
+	if err != nil {
+		return resp, err
+	}
+	resp = append(resp, ts...)
+	return resp, nil
 }
 
 /*

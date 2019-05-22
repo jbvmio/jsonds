@@ -140,7 +140,7 @@ func toStringArray(s interface{}) []string {
 func flattenArray(i []interface{}) []interface{} {
 	var returnArray []interface{}
 	var workArray [][]interface{}
-	workArray[0] = i
+	workArray = append(workArray, i)
 	for x := 0; x < len(workArray); x++ {
 		for y := 0; y < len(workArray[x]); y++ {
 			switch z := workArray[x][y].(type) {
